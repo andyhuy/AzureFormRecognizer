@@ -1,0 +1,82 @@
+﻿@model BillModel
+@{
+    ViewData["Title"] = "Home Page";
+    int i = 1;
+}
+
+<div class="text-center">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="form-group row" style="margin-top:20px">
+                        <select class="custom-select mr-sm-2" name="AccountCategory">
+                            <option value="1" selected>Income</option>
+                            <option value="2" >Expenses</option>
+                        </select>
+                    </div>
+                    <div class="form-group row" style="margin-top:20px">
+                        <select class="custom-select mr-sm-2" name="TransactionType">
+                            <option value="1" selected>Business</option>
+                            <option value="2">Personal</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top:20px">
+                        <input type="file" class="custom-file-input" name="BillFile">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+            <div class="col-sm">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Invoice Date</th>
+                            <th scope="col">Account Category</th>
+                            <th scope="col">Transaction Type</th>
+                            <th scope="col">GST</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">@Model?.Amount</th>
+                            <td>@Model?.Date</td>
+                            <td>@(Model?.AccountCategory == 1 ? "Income" : "Expenses")</td>
+                            <td>@(Model?.TransactionType == 1 ? "Business" : "Personal")</td>
+                            <td>@(Model?.GST != null && Model.GST == true ? "YES" : "NO")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-sm">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">stt</th>
+                            <th scope="col">Key</th>
+                            <th scope="col">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.RawData != null && Model.RawData.Any())
+                        {
+                            foreach (var item in Model.RawData)
+                            {
+                                <tr>
+                                    <th scope="row">@i</th>
+                                    <td>@item.Key</td>
+                                    <td>@item.Value</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+
+</div>
