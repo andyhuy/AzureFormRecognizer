@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.AI.FormRecognizer;
+using Azure.AI.FormRecognizer.Models;
 using AzureFormRecognizer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -76,37 +77,14 @@ namespace AzureFormRecognizer.Web.Controllers
                         if (!string.IsNullOrWhiteSpace(request.BillUrl))
                         {
                             var response = await client.StartRecognizeInvoicesFromUriAsync(new Uri(pathFile)).WaitForCompletionAsync();
-                            foreach (var data in response.Value)
-                            {
-                                if (data.Fields.Any())
-                                {
-                                    foreach (var item in data.Fields)
-                                    {
-                                        var key = item.Key;
-                                        var value = item.Value?.ValueData?.Text ?? string.Empty;
-                                        bill.RawData.Add(new KeyValuePair<string, string>(key, value));
-                                    }
-                                }
-                            }
+                            bill = GetResponseData(bill, response);
                         }
                         else
                         {
                             using (FileStream stream = new FileStream(pathFile, FileMode.Open))
                             {
                                 var response = await client.StartRecognizeInvoices(stream).WaitForCompletionAsync();
-
-                                foreach (var data in response.Value)
-                                {
-                                    if (data.Fields.Any())
-                                    {
-                                        foreach (var item in data.Fields)
-                                        {
-                                            var key = item.Key;
-                                            var value = item.Value?.ValueData?.Text ?? string.Empty;
-                                            bill.RawData.Add(new KeyValuePair<string, string>(key, value));
-                                        }
-                                    }
-                                }
+                                bill = GetResponseData(bill, response);
 
                             }
                         }
@@ -122,6 +100,42 @@ namespace AzureFormRecognizer.Web.Controllers
             catch (Exception)
             {
 
+            }
+            return bill;
+        }
+
+        private BillModel GetResponseData(BillModel bill, Response<RecognizedFormCollection> response)
+        {
+            foreach (var data in response.Value)
+            {
+                if (data.Fields.Any())
+                {
+                    foreach (var item in data.Fields)
+                    {
+                        var key = item.Key;
+                        if (key.ToLower().Equals("items"))
+                        {
+                            List<string> items = new List<string>();
+                            var lines = item.Value?.Value.AsList();
+
+                            foreach (var field in lines)
+                            {
+                                var rawData = field.ValueData.Text;
+                                if (!string.IsNullOrWhiteSpace(rawData)) items.Add(rawData);
+                            }
+                            if (items.Any())
+                            {
+                                var value = string.Join("\r\n", items);
+                                bill.RawData.Add(new KeyValuePair<string, string>(key, value));
+                            }
+                        }
+                        else
+                        {
+                            var value = item.Value?.ValueData?.Text ?? string.Empty;
+                            bill.RawData.Add(new KeyValuePair<string, string>(key, value));
+                        }
+                    }
+                }
             }
             return bill;
         }
