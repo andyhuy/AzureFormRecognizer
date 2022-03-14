@@ -2,7 +2,7 @@ using AzureFormRecognizer.Web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<AzureSettings>(builder.Configuration.GetSection("AzureSettings"));
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews();//.AddRazorRuntimeCompilation();
 
 var app = builder.Build();
 

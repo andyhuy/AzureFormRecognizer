@@ -7,27 +7,27 @@
 <div class="text-center">
     <div class="container">
         <div class="row">
-            <div class="col-sm">
+            <div class="col-sm-6">
                 <form method="post" enctype="multipart/form-data">
-                    <div class="form-group row" style="margin-top:20px">
-                        <select class="custom-select mr-sm-2" name="AccountCategory">
+                    <div class="form-group" style="margin-top:20px">
+                        <select name="AccountCategory">
                             <option value="1" selected>Income</option>
-                            <option value="2" >Expenses</option>
+                            <option value="2">Expenses</option>
                         </select>
+                        <input type="file" class="custom-file-input" name="BillFile">
+                        <button type="submit" class="btn btn-primary">Submit</button>
                     </div>
-                    <div class="form-group row" style="margin-top:20px">
-                        <select class="custom-select mr-sm-2" name="TransactionType">
+                    <div class="form-group" style="margin-top:20px;margin-left: -190px;">
+                        <select class="transactiontype" name="TransactionType">
                             <option value="1" selected>Business</option>
                             <option value="2">Personal</option>
                         </select>
+                        <input type="text" placeholder="Image/Pdf url" name="BillUrl">
                     </div>
-                    <div class="form-group" style="margin-top:20px">
-                        <input type="file" class="custom-file-input" name="BillFile">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
-            <div class="col-sm">
+            <div class="col-sm-6">
+                <h3>Result Table</h3></>
                 <table class="table">
                     <thead>
                         <tr>
@@ -49,19 +49,26 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-sm">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">stt</th>
-                            <th scope="col">Key</th>
-                            <th scope="col">Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.RawData != null && Model.RawData.Any())
-                        {
-                            foreach (var item in Model.RawData)
+            <div class="col-sm-6" style="margin-top:20px">
+                @if (Model != null && !string.IsNullOrWhiteSpace(Model.BillUrl) && !Model.BillUrl.ToLower().EndsWith(".pdf"))
+                {
+                    <img src="@Model.BillUrl" width="630px" height="700px" alt="Italian Trulli">
+                }
+            </div>
+            @if (Model != null && Model.RawData != null && Model.RawData.Any())
+            {
+                <div class="col-sm-6">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">No.</th>
+                                <th scope="col">Key</th>
+                                <th scope="col">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (var item in Model.RawData)
                             {
                                 <tr>
                                     <th scope="row">@i</th>
@@ -70,11 +77,10 @@
                                 </tr>
                                 i++;
                             }
-                        }
-                    </tbody>
-                </table>
-
-            </div>
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 

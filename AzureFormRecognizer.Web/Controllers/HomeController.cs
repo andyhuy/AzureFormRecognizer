@@ -46,39 +46,77 @@ namespace AzureFormRecognizer.Web.Controllers
             BillModel bill = new BillModel();
             try
             {
-                string endpoint = _azureSettings.Value.FormRecognizer.EndPoint;
-                string apiKey = _azureSettings.Value.FormRecognizer.ApiKey;
-                var credential = new AzureKeyCredential(apiKey);
-                var client = new FormRecognizerClient(new Uri(endpoint), credential);
-                string pathFile = await UploadedFile(request);
-                if(request != null)
+                if (request != null && (request.BillFile != null || !string.IsNullOrWhiteSpace(request.BillUrl)))
                 {
-                    bill.AccountCategory = request.AccountCategory;
-                    bill.TransactionType = request.TransactionType;
-                }
-
-                using (FileStream stream = new FileStream(pathFile, FileMode.Open))
-                {
-                    var response = await client.StartRecognizeInvoicesAsync(stream).WaitForCompletionAsync();
-
-                    foreach (var data in response.Value)
+                    string endpoint = _azureSettings.Value.FormRecognizer.EndPoint;
+                    string apiKey = _azureSettings.Value.FormRecognizer.ApiKey;
+                    var credential = new AzureKeyCredential(apiKey);
+                    var client = new FormRecognizerClient(new Uri(endpoint), credential);
+                    string pathFile = string.Empty;
+                    string fileName = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(request.BillUrl))
                     {
-                        if (data.Fields.Any())
+                        pathFile = request.BillUrl;
+                        bill.BillUrl = pathFile;
+                    }
+                    else
+                    {
+                        var upload = await UploadedFile(request);
+                        pathFile = upload.Item1;
+                        fileName = upload.Item2;
+                    }
+                    if (!string.IsNullOrEmpty(pathFile))
+                    {
+                        if (request.BillFile != null && !request.BillFile.FileName.ToLower().EndsWith(".pdf"))
                         {
-                            foreach (var item in data.Fields)
+                            bill.BillUrl = $"bills/{fileName}";
+                        }
+                        bill.AccountCategory = request.AccountCategory;
+                        bill.TransactionType = request.TransactionType;
+                        if (!string.IsNullOrWhiteSpace(request.BillUrl))
+                        {
+                            var response = await client.StartRecognizeInvoicesFromUriAsync(new Uri(pathFile)).WaitForCompletionAsync();
+                            foreach (var data in response.Value)
                             {
-                                var key = item.Key;
-                                var value = item.Value?.ValueData?.Text ?? string.Empty;
-                                bill.RawData.Add(new KeyValuePair<string, string>(key, value));
-                                //Console.WriteLine($"{key}-{value}");
+                                if (data.Fields.Any())
+                                {
+                                    foreach (var item in data.Fields)
+                                    {
+                                        var key = item.Key;
+                                        var value = item.Value?.ValueData?.Text ?? string.Empty;
+                                        bill.RawData.Add(new KeyValuePair<string, string>(key, value));
+                                    }
+                                }
                             }
                         }
+                        else
+                        {
+                            using (FileStream stream = new FileStream(pathFile, FileMode.Open))
+                            {
+                                var response = await client.StartRecognizeInvoices(stream).WaitForCompletionAsync();
+
+                                foreach (var data in response.Value)
+                                {
+                                    if (data.Fields.Any())
+                                    {
+                                        foreach (var item in data.Fields)
+                                        {
+                                            var key = item.Key;
+                                            var value = item.Value?.ValueData?.Text ?? string.Empty;
+                                            bill.RawData.Add(new KeyValuePair<string, string>(key, value));
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                        
+                        bill.Amount = GetAmount(bill);
+                        bill.Date = GetDate(bill);
+                        bill.GST = CheckGST(bill);
                     }
 
                 }
-                bill.Amount = GetAmount(bill);
-                bill.Date = GetDate(bill);
-                bill.GST = CheckGST(bill);
 
             }
             catch (Exception)
@@ -88,7 +126,7 @@ namespace AzureFormRecognizer.Web.Controllers
             return bill;
         }
 
-        private async Task<string> UploadedFile(BillRequest? model)
+        private async Task<(string, string)> UploadedFile(BillRequest? model)
         {
 
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "bills");
@@ -105,13 +143,9 @@ namespace AzureFormRecognizer.Web.Controllers
                         await model.BillFile.CopyToAsync(fileStream);
                     }
                 }
-                return filePath;
+                return (filePath, uniqueFileName);
             }
-            else
-            {
-                uniqueFileName = "bill1.png";
-                return Path.Combine(uploadsFolder, uniqueFileName);
-            }
+            return (uniqueFileName, uniqueFileName);
         }
         #region Mapping
 
@@ -132,6 +166,10 @@ namespace AzureFormRecognizer.Web.Controllers
             else if (bill.RawData.Any(x => x.Key.ToLower().Contains("totaldue")))
             {
                 return bill.RawData.FirstOrDefault(x => x.Key.ToLower().Contains("totaldue")).Value;
+            }
+            else if (bill.RawData.Any(x => x.Key.ToLower().Contains("total")))
+            {
+                return bill.RawData.FirstOrDefault(x => x.Key.ToLower().Contains("total")).Value;
             }
             return string.Empty;
         }

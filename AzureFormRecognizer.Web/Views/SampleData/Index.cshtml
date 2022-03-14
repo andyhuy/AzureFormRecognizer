@@ -1,0 +1,33 @@
+﻿@model List<SampleDataModel>
+    <div class="text-center">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Url</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <th scope="row">@item.Name</th>
+                                        <td>@item.Type</td>
+                                        <td><a href="@item.Url">Link</a></td>
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
