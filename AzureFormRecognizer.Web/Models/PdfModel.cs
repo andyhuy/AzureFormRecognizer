@@ -1,5 +1,19 @@
 ﻿namespace TLPDFGenerator.Model
 {
+    public class PDFRequest
+    {
+        public IFormFile Logo { set; get; }
+
+        public string PaymentDetails { set; get; }
+
+        public string Message { set; get; }
+
+        public int ActiveTax { set; get; }
+
+        public DateTime DueDate { set; get; } = DateTime.Now.AddDays(7);
+
+        public string PayLink { set; get; } = "https://www.google.com";
+    }
     public class PdfModel
     {
         public string Logo { set; get; }

@@ -30,14 +30,20 @@ namespace AzureFormRecognizer.Web.Controllers
             return View(sampleDatas);
         }
 
-        [HttpGet("pdf")]
-        public async Task<IActionResult> GetData()
+        [HttpGet("GeneratePdf")]
+        public IActionResult GeneratePdf()
+        {
+            return View();
+        }
+
+        [HttpPost("GeneratePdf")]
+        public async Task<IActionResult> GeneratePdf(PDFRequest request)
         {
             try
             {
                 var client = new HttpClient();
                 client.BaseAddress = new Uri("https://tlpdfgenerator.azurewebsites.net/");
-                var model = await BuildTestModel();
+                var model = await BuildTestModel(request);
                 var json = JsonConvert.SerializeObject(model);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
                 var pdf = await client.PostAsync("/api/pdf", data);
@@ -56,18 +62,20 @@ namespace AzureFormRecognizer.Web.Controllers
             return new BadRequestResult();
         }
 
-        private async Task<PdfModel> BuildTestModel()
+        private async Task<PdfModel> BuildTestModel(PDFRequest model)
         {
             var request = new PdfModel();
+            Random rnd = new Random();
+            int number = rnd.Next(100, 999);
             request.InvoiceInfo = new InvoiceInfo()
             {
-                InvoiceNumber = "49F76324-0003",
-                DueDate = DateTime.Now.AddDays(7),
+                InvoiceNumber = $"49F76324-0{number}",
+                DueDate = model.DueDate,
                 Address = "180 City Road, Southbank VIC 3006",
                 Name = "Michael Kambouris",
                 Email = "michaelkambo1982@gmail.com",
                 PhoneNumber = "0416 657 072",
-                PayLink = "https://www.google.com"
+                PayLink = model.PayLink
             };
 
             request.Order = new Order()
@@ -82,17 +90,29 @@ namespace AzureFormRecognizer.Web.Controllers
                     new Line(){Description = "Preparation and lodgements of 2017 Income Tax Return",Qty =1 ,UnitPrice = 149,Tax= 10,Amount= 149}
                 }
             };
+
+            if(model.Logo != null)
+            {
+                var bytes = await GetBytes(model.Logo);
+                request.Logo = Convert.ToBase64String(bytes);
+                request.LogoName = model.Logo.FileName;
+            }
            
-            string logoName = "Tax-Logo.png";
-            string urlLogo = Path.Combine(_webHostEnvironment.WebRootPath, $"Logo/{logoName}");
-            var logo = await System.IO.File.ReadAllBytesAsync(urlLogo);
-            request.Logo = Convert.ToBase64String(logo);
-            request.LogoName = logoName;
-            request.ActiveTax = true;
-            request.PaymentDetails = "BSB: 083-195 Account: 67 561 6057";
-            request.Message = "Thank you for your business";
+            
+            request.ActiveTax = model.ActiveTax == 1 ? true : false;
+            request.PaymentDetails = model.PaymentDetails;
+            request.Message = model.Message;
             request.Currency = "$";
             return request;
+        }
+
+        private async Task<byte[]> GetBytes(IFormFile formFile)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                await formFile.CopyToAsync(memoryStream);
+                return memoryStream.ToArray();
+            }
         }
     }
 }
