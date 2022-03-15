@@ -1,0 +1,50 @@
+﻿<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <style>
+        table {
+            border: 1px solid silver;
+            border-collapse: collapse;
+        }
+
+            table td {
+                border-bottom: 1px solid silver;
+            }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">Invoice</h1>
+    <div style="float:left;">
+        {{InvoiceInfo}}
+    </div>
+    <div style="float:right;">
+        <div style="border:1px solid gray;padding:10px;">
+            {{Logo}}
+        </div>
+    </div>
+    <div style="clear:both;"></div>
+    <br /><br />
+    Ordered items list:
+    <table width="100%" style="margin-bottom:20px;">
+        <tr>
+            {{OrderLineHeader}}
+        </tr>
+        <tr>
+            {{OrderLine}}
+        </tr>
+    </table>
+
+    <table width="100%" style="margin-bottom:20px;">
+        {{Order}}
+    </table>
+
+    <div style="float:right;">
+        Signed: Tuesday, March 15, 2022 8:15 AM<br />
+        From IP: 42.112.239.178
+        Signature:<br />
+        <img src="https://www.nrecosite.com/img/pdfgenerator/donald_sign.jpg" />
+    </div>
+    <div style="float:left;">Sincerely,<br />Donald</div>
+    <div style="clear:both;"></div>
+</body>
+</html>
