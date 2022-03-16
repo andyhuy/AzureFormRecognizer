@@ -5,10 +5,10 @@ namespace TLPDFGenerator
 {
     public static class PDFBulider
     {
-        public static async Task<string> BuildTemplate(string htmlContent, string currentDirectory, PdfModel model, IWebHostEnvironment webHostEnvironment)
+        public static async Task<string> BuildTemplate(string htmlContent, PdfModel model, IWebHostEnvironment webHostEnvironment)
         {
             var t1 = BuildInvoiceInfo(model);
-            var t2 = BuildLogo(currentDirectory, model, webHostEnvironment);
+            var t2 = BuildLogo(model, webHostEnvironment);
             var t3 = BuildOrderLineHeader(model);
             var t4 = BuildOrderLine(model);
             var t5 = BuildOrder(model);
@@ -58,13 +58,17 @@ namespace TLPDFGenerator
             return string.Empty;
         }
 
-        private static async Task<string> BuildLogo(string currentDirectory, PdfModel model, IWebHostEnvironment webHostEnvironment)
+        private static async Task<string> BuildLogo(PdfModel model, IWebHostEnvironment webHostEnvironment)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(model.Logo)) return string.Empty;
+                var date = DateTime.Now.ToString("MM_dd_yyyy");
                 string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "Logo");
-                string filePath = Path.Combine(uploadsFolder, $"{Guid.NewGuid()}_{model.LogoName}");
+                string dateFolder = Path.Combine(uploadsFolder, $"{date}");
+                if (!Directory.Exists(date))
+                    Directory.CreateDirectory(dateFolder);
+                string filePath = Path.Combine(dateFolder, $"{Guid.NewGuid()}_{model.LogoName}");
                 await File.WriteAllBytesAsync(filePath, Convert.FromBase64String(model.Logo));
                 string logo = @"<img src=""{{LogoUrl}}"" alt=""Logo"" />";
                 logo = logo.Replace("{{LogoUrl}}", filePath);

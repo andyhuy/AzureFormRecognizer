@@ -16,7 +16,7 @@ namespace AzureFormRecognizer.Web.Controllers
             new SampleDataModel(){Url="bills/form-recognizer-demo-sample91.pdf",Name="form-recognizer-demo-sample91",Type="PDF/File"},
             new SampleDataModel(){Url="bills/recognizer-demo-sample6.pdf",Name="recognizer-demo-sample6",Type="PDF/File"},
             new SampleDataModel(){Url="https://slicedinvoices.com/pdf/wordpress-pdf-invoice-plugin-sample.pdf",Name="recognizer-demo-sample6",Type="PDF/Link"},
-            
+
         };
         private readonly IWebHostEnvironment _webHostEnvironment;
 
@@ -41,16 +41,15 @@ namespace AzureFormRecognizer.Web.Controllers
         {
             try
             {
-                var client = new HttpClient();
-                client.BaseAddress = new Uri("https://tlpdfgenerator.azurewebsites.net/");
-                var model = await BuildTestModel(request);
-                var json = JsonConvert.SerializeObject(model);
-                var data = new StringContent(json, Encoding.UTF8, "application/json");
-                var pdf = await client.PostAsync("/api/pdf", data);
+                var pdf = await GetPdfFile(request);
                 if (pdf != null && pdf.IsSuccessStatusCode)
                 {
                     var content = await pdf.Content.ReadAsByteArrayAsync();
-                    return File(content, "application/octet-stream", $"Invoice_{DateTime.Now}.pdf");
+                    if(request.Options == 1)
+                    {
+                        return File(content, "application/octet-stream", $"Invoice_{DateTime.Now}.pdf");
+                    }
+                    return new FileContentResult(content, "application/pdf");
                 }
 
             }
@@ -60,6 +59,18 @@ namespace AzureFormRecognizer.Web.Controllers
             }
 
             return new BadRequestResult();
+        }
+
+        private async Task<HttpResponseMessage> GetPdfFile(PDFRequest request)
+        {
+            var client = new HttpClient();
+            client.BaseAddress = new Uri("https://tlpdfgenerator.azurewebsites.net/");
+            //client.BaseAddress = new Uri("https://localhost:7279/");
+            var model = await BuildTestModel(request);
+            var json = JsonConvert.SerializeObject(model);
+            var data = new StringContent(json, Encoding.UTF8, "application/json");
+            var pdf = await client.PostAsync("/api/pdf", data);
+            return pdf;
         }
 
         private async Task<PdfModel> BuildTestModel(PDFRequest model)
@@ -91,14 +102,14 @@ namespace AzureFormRecognizer.Web.Controllers
                 }
             };
 
-            if(model.Logo != null)
+            if (model.Logo != null)
             {
                 var bytes = await GetBytes(model.Logo);
                 request.Logo = Convert.ToBase64String(bytes);
                 request.LogoName = model.Logo.FileName;
             }
-           
-            
+
+
             request.ActiveTax = model.ActiveTax == 1 ? true : false;
             request.PaymentDetails = model.PaymentDetails;
             request.Message = model.Message;

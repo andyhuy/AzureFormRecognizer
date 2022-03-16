@@ -33,7 +33,7 @@ namespace TLPDFGenerator.Controllers
                     if (System.IO.File.Exists(filePath))
                     {
                         string htmlContent = System.IO.File.ReadAllText(filePath);
-                        string template = await PDFBulider.BuildTemplate(htmlContent, currentDirectory, request, _webHostEnvironment);
+                        string template = await PDFBulider.BuildTemplate(htmlContent, request, _webHostEnvironment);
                         var pdf = _generatePdf.GetPDF(template);
                         return File(pdf, "application/octet-stream", $"Invoice_{DateTime.Now}.pdf");
                     }

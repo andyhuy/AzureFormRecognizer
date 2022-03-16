@@ -13,6 +13,8 @@
         public DateTime DueDate { set; get; } = DateTime.Now.AddDays(7);
 
         public string PayLink { set; get; } = "https://www.google.com";
+
+        public int Options { set; get; } = 1;
     }
     public class PdfModel
     {
